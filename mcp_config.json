@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "worker": {
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/dist/mcp-server.mjs"],
+      "timeoutSeconds": 660,
+      "tools": {
+        "codex_swarm": { "eager": true, "background": "off" },
+        "codex_swarm_turn": { "eager": true, "background": "always" },
+        "codex_consult": { "eager": true, "background": "always" },
+        "codex_review": { "eager": true, "background": "always" }
+      }
+    }
+  }
+}

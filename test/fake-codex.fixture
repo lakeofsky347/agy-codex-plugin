@@ -1,0 +1,199 @@
+#!/usr/bin/env node
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
+import { setTimeout } from 'node:timers/promises';
+
+const args = process.argv.slice(2);
+
+function marker(name) {
+  return fileURLToPath(new URL(`./${name}`, import.meta.url));
+}
+
+if (args[0] === 'app-server') {
+  const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
+  const authMode = process.env.FAKE_CODEX_AUTH_MODE || 'chatgpt';
+  const rpcErrorMethod = process.env.FAKE_CODEX_RPC_ERROR;
+  const catalog = [
+    {
+      id: 'gpt-6.2-sol',
+      model: 'gpt-6.2-sol',
+      displayName: 'GPT-6.2-Sol',
+      isDefault: true,
+      defaultReasoningEffort: 'low',
+      supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].map((reasoningEffort) => ({ reasoningEffort })),
+    },
+    {
+      id: 'gpt-6.2-astra',
+      model: 'gpt-6.2-astra',
+      displayName: 'GPT-6.2-Astra',
+      isDefault: false,
+      defaultReasoningEffort: 'low',
+      supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].map((reasoningEffort) => ({ reasoningEffort })),
+    },
+  ];
+  const hiddenCatalog = [
+    ...catalog,
+    {
+      id: 'gpt-reserve',
+      model: 'gpt-reserve',
+      displayName: 'GPT-Reserve',
+      isDefault: false,
+      defaultReasoningEffort: 'medium',
+      supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'].map((reasoningEffort) => ({ reasoningEffort })),
+    },
+  ];
+
+  rl.on('line', (line) => {
+    let msg;
+    try {
+      msg = JSON.parse(line);
+    } catch {
+      return;
+    }
+    if (msg.id === undefined) return;
+    if (msg.method === rpcErrorMethod) {
+      process.stdout.write(`${JSON.stringify({
+        jsonrpc: '2.0', id: msg.id, error: { code: -32603, message: 'simulated RPC error' },
+      })}\n`);
+      return;
+    }
+    switch (msg.method) {
+      case 'initialize':
+        process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: { serverInfo: { name: 'fake-codex' } } })}\n`);
+        break;
+      case 'account/read':
+        process.stdout.write(`${JSON.stringify({
+          jsonrpc: '2.0',
+          id: msg.id,
+          result: {
+            account: authMode === 'none' ? null : { type: authMode, planType: 'prolite' },
+            requiresOpenaiAuth: true,
+          },
+        })}\n`);
+        break;
+      case 'model/list':
+        process.stdout.write(`${JSON.stringify({
+          jsonrpc: '2.0',
+          id: msg.id,
+          result: { data: msg.params?.includeHidden ? hiddenCatalog : catalog },
+        })}\n`);
+        break;
+      case 'account/rateLimits/read':
+        process.stdout.write(`${JSON.stringify({
+          jsonrpc: '2.0',
+          id: msg.id,
+          result: {
+            rateLimits: {
+              primary: { usedPercent: 12, windowDurationMins: 300 },
+              secondary: { usedPercent: 4, windowDurationMins: 10080 },
+            },
+          },
+        })}\n`);
+        break;
+      default:
+        process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } })}\n`);
+    }
+  });
+  await new Promise(() => {});
+}
+
+const isReview = args.includes('review');
+const isFork = args.includes('fork');
+const isResume = args.includes('resume');
+const uuidArg = args.find((arg) => /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(arg));
+const sessionId = isFork ? randomUUID() : (uuidArg ?? randomUUID());
+
+let prompt = '';
+for await (const chunk of process.stdin) prompt += chunk;
+
+function emit(event) {
+  process.stdout.write(`${JSON.stringify(event)}\n`);
+}
+
+if (prompt.includes('simulate stderr startup crash')) {
+  process.stderr.write('Error loading config.toml: simulated broken TOML syntax\n');
+  process.exit(2);
+}
+
+emit({ type: 'thread.started', thread_id: sessionId });
+
+if (prompt.includes('simulate an agent failure')) {
+  emit({ type: 'turn.failed', error: { message: 'simulated provider failure' } });
+  process.exitCode = 1;
+} else if (prompt.includes('simulate a cancellable job')) {
+  const match = /marker:([a-z0-9_-]+)/i.exec(prompt);
+  const tag = match ? match[1] : 'cancellable';
+  process.once('SIGTERM', async () => {
+    await writeFile(marker(`${tag}.terminated`), 'terminated');
+    process.exit(143);
+  });
+  await writeFile(marker(`${tag}.started`), 'started');
+  await setTimeout(15_000);
+} else {
+  const parallelWorker = /parallel test worker (alpha|beta)/.exec(prompt)?.[1];
+  if (parallelWorker) {
+    const peer = parallelWorker === 'alpha' ? 'beta' : 'alpha';
+    await writeFile(marker(`${parallelWorker}.started`), 'started');
+    const deadline = Date.now() + 4_000;
+    while (!existsSync(marker(`${peer}.started`))) {
+      if (Date.now() > deadline) throw new Error('The other worker did not run concurrently.');
+      await setTimeout(25);
+    }
+  }
+
+  let loadedSchema;
+  const schemaFlagIndex = args.indexOf('--output-schema');
+  if (schemaFlagIndex !== -1 && args[schemaFlagIndex + 1]) {
+    const schemaPath = args[schemaFlagIndex + 1];
+    loadedSchema = JSON.parse(await readFile(schemaPath, 'utf8'));
+    await writeFile(marker('last-schema-path.txt'), schemaPath, 'utf8');
+  }
+
+  emit({
+    type: 'item.completed',
+    item: {
+      id: 'cmd-1',
+      type: 'command_execution',
+      command: ['rg', '--files', 'src'],
+    },
+  });
+
+  if (args.includes('workspace-write')) {
+    emit({
+      type: 'item.completed',
+      item: {
+        id: 'fc-1',
+        type: 'file_change',
+        changes: [{ path: 'src/parser.mjs', kind: 'update' }],
+      },
+    });
+  }
+
+  emit({
+    type: 'item.completed',
+    item: {
+      id: 'answer',
+      type: 'agent_message',
+      text: JSON.stringify({
+        args,
+        cwd: process.cwd(),
+        isReview,
+        isFork,
+        isResume,
+        forkedFrom: isFork ? uuidArg : undefined,
+        prompt,
+        sessionId,
+        loadedSchema,
+        hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY),
+        hasCodexKey: Boolean(process.env.CODEX_API_KEY),
+      }),
+    },
+  });
+  emit({
+    type: 'turn.completed',
+    usage: { input_tokens: 11, cached_input_tokens: 4, output_tokens: 5 },
+  });
+}

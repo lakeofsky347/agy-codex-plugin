@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="accentA" x1="28" y1="32" x2="78" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="accentB" x1="56" y1="36" x2="102" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <!-- 10% transparent outer margin baked in (14..114) -->
+  <rect x="14" y="14" width="100" height="100" rx="24" fill="url(#bg)" stroke="#475569" stroke-width="3"/>
+  <!-- Code bracket left (Primary Agent) -->
+  <path d="M48 42L30 64L48 86" stroke="url(#accentA)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Code bracket right (Codex Second Opinion) -->
+  <path d="M80 42L98 64L80 86" stroke="url(#accentB)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Audit lens / verification node in center -->
+  <circle cx="64" cy="64" r="13" stroke="#F8FAFC" stroke-width="5.5"/>
+  <path d="M59 64.5L62.5 68L70 60.5" stroke="#34D399" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
