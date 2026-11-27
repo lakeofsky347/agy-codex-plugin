@@ -2,7 +2,7 @@
 
 在 Antigravity 会话与 `/swarm` 多智能体编队中管理并调度本机 ChatGPT 登录态下的 OpenAI Codex CLI 模型。既能让 Codex 在隔离的 Git Worktree 中作为 **Builder / Author（`workspace-write`）** 参与构建与提交，也能作为 **Verifier / Auditor（`read-only`）** 进行高信噪比代码审查与交叉二审。
 
-## 核心能力（v0.3.2）
+## 核心能力
 
 - **Swarm 混合编队管理（Builder + Verifier）**：
   - **模型目录与限流查询（`codex_swarm` `models`）**：通过 `codex app-server` 读取当前 ChatGPT 登录态下可用的 Codex 模型列表（及 `low`～`ultra` 推理档位）和窗口配额状态；严格剥离 `OPENAI_API_KEY` / `CODEX_API_KEY`，仅使用本地 ChatGPT 订阅态。
@@ -15,7 +15,14 @@
 
 ## 安装与更新
 
-需要 Antigravity App 或 CLI（`agy`）、本机 Node.js 22+，以及已用 ChatGPT 登录的 Codex CLI：
+需要 Antigravity App 或 CLI（`agy`）、本机 Node.js 22+，以及已用 ChatGPT 登录的 Codex CLI。可直接从 GitHub 安装已构建的插件。
+
+```bash
+codex login status
+agy plugin install https://github.com/lakeofsky347/agy-codex-plugin
+```
+
+如需从本地源码安装，在仓库根目录运行以下命令。
 
 ```bash
 codex login status
@@ -24,7 +31,7 @@ agy plugin validate --strict .
 agy plugin install .
 ```
 
-更新后，在 Antigravity 中开启新会话。若现有 App 进程仍加载旧版 MCP 工具声明，在插件面板关闭再开启 Codex Delegate，确认已加载 `0.3.2` 后重试。
+更新后，在 Antigravity 中开启新会话。若现有 App 进程仍加载旧版 MCP 工具声明，在插件面板关闭再开启 Codex Delegate，确认版本后重试。
 
 ## 使用方式
 

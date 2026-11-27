@@ -2,8 +2,13 @@
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "codex-delegate",
   "displayName": "Codex Delegate",
-  "version": "0.3.2",
-  "description": "Manage ChatGPT-authenticated local OpenAI Codex models inside Antigravity /swarm as builders and verifiers, or run zero-polling read-only audits and Git reviews.",
+  "version": "0.3.3",
+  "description": "Delegate code reviews and Swarm worktree tasks from Google Antigravity to local OpenAI Codex, with independent sessions and background results.",
+  "author": {
+    "name": "lakeofsky347",
+    "url": "https://github.com/lakeofsky347"
+  },
+  "repository": "https://github.com/lakeofsky347/agy-codex-plugin",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
     "/swarm Use local ChatGPT Codex models as isolated workspace-write builders and a read-only verifier to implement and verify our next task.",
@@ -11,7 +16,10 @@
     "Use codex-auditor to get an independent second opinion on concurrency and error-handling risks in src/."
   ],
   "keywords": [
+    "antigravity",
+    "antigravity-plugin",
     "codex",
+    "mcp",
     "swarm",
     "code-review",
     "audit",

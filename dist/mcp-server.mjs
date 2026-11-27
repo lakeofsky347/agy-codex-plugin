@@ -22683,7 +22683,7 @@ async function queryViaAppServer(executable, includeHidden) {
   }
   try {
     const initResp = await rpc("initialize", {
-      clientInfo: { name: "codex-delegate", version: "0.3.2" },
+      clientInfo: { name: "codex-delegate", version: "0.3.3" },
       capabilities: {}
     });
     if (initResp?.error) {
@@ -23167,7 +23167,7 @@ async function executeCodex(toolName, options, slot) {
 }
 function createServer() {
   const server = new McpServer(
-    { name: "codex-delegate", version: "0.3.2" },
+    { name: "codex-delegate", version: "0.3.3" },
     {
       instructions: "Bridge Antigravity with the ChatGPT-authenticated local Codex CLI. For /swarm teams using Codex builders or verifiers, use codex_swarm (foreground control: models/status/bind/configure/release) and codex_swarm_turn (background execution bound to a member session). For standalone read-only second opinions or Git reviews, use codex_consult and codex_review."
     }

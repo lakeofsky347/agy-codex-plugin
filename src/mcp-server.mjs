@@ -121,7 +121,7 @@ async function executeCodex(toolName, options, slot) {
 
 function createServer() {
   const server = new McpServer(
-    { name: 'codex-delegate', version: '0.3.2' },
+    { name: 'codex-delegate', version: '0.3.3' },
     {
       instructions:
         'Bridge Antigravity with the ChatGPT-authenticated local Codex CLI. ' +

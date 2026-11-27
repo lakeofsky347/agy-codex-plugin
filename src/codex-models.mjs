@@ -132,7 +132,7 @@ async function queryViaAppServer(executable, includeHidden) {
 
   try {
     const initResp = await rpc('initialize', {
-      clientInfo: { name: 'codex-delegate', version: '0.3.2' },
+      clientInfo: { name: 'codex-delegate', version: '0.3.3' },
       capabilities: {},
     });
     if (initResp?.error) {
